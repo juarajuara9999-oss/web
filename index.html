@@ -1,0 +1,596 @@
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { Menu, Home, Wallet, User, MessageCircle, ChevronRight, LogOut, PlusCircle, Settings, FileText, Users, CreditCard } from 'lucide-react';
+
+// --- FIREBASE CONFIGURATION ---
+const userFirebaseConfig = {
+  apiKey: "AIzaSyBHXVyBAqf_-UziVXBEQI2cMzyRZ_yiRIc",
+  authDomain: "juarajuara-1096b.firebaseapp.com",
+  projectId: "juarajuara-1096b",
+  storageBucket: "juarajuara-1096b.firebasestorage.app",
+  messagingSenderId: "337698797924",
+  appId: "1:337698797924:web:1c67e516eca8fd35c52271",
+  measurementId: "G-RZNL1PWEQZ"
+};
+
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userFirebaseConfig;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'juara999-app';
+
+const getPublicCollection = (colName) => collection(db, 'artifacts', appId, 'public', 'data', colName);
+const getPublicDoc = (colName, docId) => doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
+
+// --- TEMA BERDASARKAN SCREENSHOT ---
+const theme = {
+  bg: "bg-[#111111] min-h-screen text-white font-sans pb-20", // pb-20 for bottom nav
+  surface: "bg-[#1f1f1f]",
+  input: "w-full bg-[#111111] text-gray-200 border border-gray-700 rounded px-4 py-3 focus:outline-none focus:border-yellow-500 transition-all mb-4 text-sm",
+  btnGold: "w-full bg-gradient-to-b from-yellow-500 to-yellow-700 text-black font-bold py-3 px-4 rounded shadow-lg hover:from-yellow-400 hover:to-yellow-600 transition-all",
+  btnNavy: "w-full bg-gradient-to-b from-[#1e3a8a] to-[#172554] text-white font-bold py-3 px-4 rounded shadow-lg border border-[#1e3a8a] hover:from-[#2563eb] transition-all",
+  textGold: "text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600",
+};
+
+export default function App() {
+  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [sessionUser, setSessionUser] = useState(null);
+  const [view, setView] = useState('login'); // login, register, home, deposit, withdraw, admin
+  const [activeTab, setActiveTab] = useState('TRANDING'); // TRANDING, NEW, PROMOTION
+  
+  const [allPosts, setAllPosts] = useState([]);
+  const [allMembers, setAllMembers] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
+  const [qrisUrl, setQrisUrl] = useState('https://via.placeholder.com/300x300.png?text=QRIS+Placeholder');
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Auth Error:", error);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setFirebaseUser);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const initAdmin = async () => {
+      const adminRef = getPublicDoc('members', 'admin');
+      const adminSnap = await getDoc(adminRef);
+      if (!adminSnap.exists()) {
+        await setDoc(adminRef, { username: 'admin', password: 'admin000', role: 'admin', name: 'Administrator', balance: 0 });
+      }
+      const qrisRef = getPublicDoc('settings', 'qris');
+      const qrisSnap = await getDoc(qrisRef);
+      if (!qrisSnap.exists()) {
+        await setDoc(qrisRef, { url: 'https://via.placeholder.com/300x300.png?text=QRIS+Placeholder' });
+      }
+    };
+    initAdmin();
+
+    const unsubPosts = onSnapshot(getPublicCollection('posts'), (snap) => setAllPosts(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (err) => console.error(err));
+    const unsubMembers = onSnapshot(getPublicCollection('members'), (snap) => {
+      const membersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAllMembers(membersData);
+      if (sessionUser) {
+        const updatedMe = membersData.find(m => m.username === sessionUser.username);
+        if (updatedMe) setSessionUser({ id: updatedMe.id, ...updatedMe.data() });
+      }
+    }, (err) => console.error(err));
+    const unsubTx = onSnapshot(getPublicCollection('transactions'), (snap) => setAllTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.timestamp - a.timestamp)), (err) => console.error(err));
+    const unsubQris = onSnapshot(getPublicDoc('settings', 'qris'), (snap) => { if (snap.exists()) setQrisUrl(snap.data().url); }, (err) => console.error(err));
+
+    return () => { unsubPosts(); unsubMembers(); unsubTx(); unsubQris(); };
+  }, [firebaseUser]);
+
+  const handleLogout = () => {
+    setSessionUser(null);
+    setView('login');
+  };
+
+  if (!firebaseUser) return <div className="bg-[#111] min-h-screen flex items-center justify-center text-yellow-500 font-bold">MEMUAT...</div>;
+
+  return (
+    <div className={theme.bg}>
+      {/* HEADER UTAMA */}
+      {(sessionUser && view !== 'login' && view !== 'register') && (
+        <header className="sticky top-0 z-50 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 flex justify-between items-center shadow-md">
+          <Menu className="text-yellow-500 w-6 h-6 cursor-pointer" />
+          <h1 className="text-xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 cursor-pointer" 
+              onClick={() => setView(sessionUser.role === 'admin' ? 'admin' : 'home')}>
+            JUARA999
+          </h1>
+          <div className="w-6 h-6"></div> {/* Spacer for center alignment */}
+        </header>
+      )}
+
+      {/* MOBILE CONTAINER UNTUK USER VIEW */}
+      <main className={sessionUser?.role === 'admin' ? "p-4 max-w-7xl mx-auto" : "max-w-md mx-auto relative bg-[#111] min-h-screen shadow-2xl overflow-hidden"}>
+        {view === 'login' && <LoginView setView={setView} members={allMembers} setSessionUser={setSessionUser} />}
+        {view === 'register' && <RegisterView setView={setView} members={allMembers} />}
+        
+        {view === 'home' && sessionUser?.role !== 'admin' && (
+          <UserDashboard user={sessionUser} setView={setView} posts={allPosts} activeTab={activeTab} setActiveTab={setActiveTab} />
+        )}
+        
+        {view === 'deposit' && <DepositView user={sessionUser} setView={setView} qrisUrl={qrisUrl} />}
+        {view === 'withdraw' && <WithdrawView user={sessionUser} setView={setView} />}
+
+        {view === 'admin' && sessionUser?.role === 'admin' && (
+          <AdminDashboard posts={allPosts} members={allMembers} transactions={allTransactions} qrisUrl={qrisUrl} handleLogout={handleLogout}/>
+        )}
+      </main>
+
+      {/* BOTTOM NAVIGATION UTK USER */}
+      {(sessionUser && sessionUser.role !== 'admin' && (view === 'home' || view === 'deposit' || view === 'withdraw')) && (
+        <div className="fixed bottom-0 w-full max-w-md left-1/2 -translate-x-1/2 bg-[#1a1a1a] border-t border-[#333] flex justify-around items-center py-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+          <button onClick={() => setView('home')} className={`flex flex-col items-center p-2 ${view === 'home' ? 'text-yellow-500' : 'text-gray-500'}`}>
+            <Home className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-bold">Home</span>
+          </button>
+          <button onClick={() => setView('deposit')} className={`flex flex-col items-center p-2 ${view === 'deposit' ? 'text-yellow-500' : 'text-gray-500'}`}>
+            <Wallet className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-bold">Deposit</span>
+          </button>
+          <button className="flex flex-col items-center p-2 text-gray-500">
+            <MessageCircle className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-bold">Live Chat</span>
+          </button>
+          <button onClick={handleLogout} className="flex flex-col items-center p-2 text-gray-500 hover:text-red-500">
+            <User className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-bold">Akun</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// VIEWS
+// ==========================================
+
+function LoginView({ setView, members, setSessionUser }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const user = members.find(m => m.username === username && m.password === password);
+    if (user) {
+      setSessionUser(user);
+      setView(user.role === 'admin' ? 'admin' : 'home');
+    } else {
+      setError('Username atau Sandi salah!');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center pt-20 px-6 max-w-md mx-auto">
+      <h1 className="text-4xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 mb-10 text-center">
+        JUARA999
+      </h1>
+      <div className="w-full bg-[#1a1a1a] p-6 rounded-xl shadow-2xl border border-gray-800">
+        <h2 className="text-xl font-bold text-center mb-6 text-white uppercase">Masuk Akun</h2>
+        {error && <div className="bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm">{error}</div>}
+        <form onSubmit={handleLogin}>
+          <input type="text" placeholder="Username" className={theme.input} value={username} onChange={e => setUsername(e.target.value)} required />
+          <input type="password" placeholder="Kata Sandi" className={theme.input} value={password} onChange={e => setPassword(e.target.value)} required />
+          <button type="submit" className={theme.btnGold}>MASUK SEKARANG</button>
+        </form>
+        <div className="mt-6 text-center text-gray-400 text-sm">
+          Belum punya akun? <button onClick={() => setView('register')} className="text-yellow-500 hover:text-yellow-400 font-bold ml-1">Daftar Di Sini</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RegisterView({ setView, members }) {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', username: '', password: '', accountNo: '', bank: '', accountOwner: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (members.find(m => m.username === form.username)) return setError('Username sudah digunakan!');
+
+    setLoading(true);
+    try {
+      await setDoc(getPublicDoc('members', `user_${Date.now()}`), { ...form, role: 'user', balance: 0, createdAt: Date.now() });
+      alert('Pendaftaran Berhasil! Silahkan Login.');
+      setView('login');
+    } catch (err) {
+      setError('Gagal mendaftar. Coba lagi.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen pb-10 pt-10 px-6 max-w-md mx-auto">
+      <div className="w-full bg-[#1a1a1a] p-6 rounded-xl shadow-2xl border border-gray-800">
+        <h2 className="text-xl font-bold text-center mb-6 text-white uppercase">Pendaftaran</h2>
+        {error && <div className="bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-1">
+          <input type="text" placeholder="Nama Lengkap" className={theme.input} required onChange={e=>setForm({...form, name: e.target.value})}/>
+          <input type="email" placeholder="Email" className={theme.input} required onChange={e=>setForm({...form, email: e.target.value})}/>
+          <input type="tel" placeholder="Nomor HP" className={theme.input} required onChange={e=>setForm({...form, phone: e.target.value})}/>
+          <input type="text" placeholder="Username" className={theme.input} required onChange={e=>setForm({...form, username: e.target.value})}/>
+          <input type="password" placeholder="Kata Sandi" className={theme.input} required onChange={e=>setForm({...form, password: e.target.value})}/>
+          
+          <div className="border-t border-gray-700 my-4 pt-4 mb-2 text-yellow-500 text-xs font-bold uppercase tracking-wider">Informasi Bank</div>
+          <input type="text" placeholder="Nama Bank (BCA/MANDIRI/DANA)" className={theme.input} required onChange={e=>setForm({...form, bank: e.target.value})}/>
+          <input type="number" placeholder="Nomor Rekening" className={theme.input} required onChange={e=>setForm({...form, accountNo: e.target.value})}/>
+          <input type="text" placeholder="Nama Pemilik Rekening" className={theme.input} required onChange={e=>setForm({...form, accountOwner: e.target.value})}/>
+          
+          <button type="submit" disabled={loading} className={`${theme.btnGold} mt-4`}>{loading ? 'MEMPROSES...' : 'DAFTAR SEKARANG'}</button>
+        </form>
+        <div className="mt-6 text-center text-gray-400 text-sm">
+          Sudah punya akun? <button onClick={() => setView('login')} className="text-yellow-500 font-bold ml-1">Masuk</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserDashboard({ user, setView, posts, activeTab, setActiveTab }) {
+  const formatRp = (num) => (num || 0).toLocaleString('id-ID');
+  const filteredPosts = posts.filter(p => p.category === activeTab);
+
+  return (
+    <div className="pb-10">
+      {/* Horizontal Menu Kategori */}
+      <div className="flex overflow-x-auto whitespace-nowrap bg-[#1a1a1a] text-sm border-b border-[#333] hide-scrollbar">
+        {['Sports', 'TRANDING', 'NEW', 'PROMOTION', 'Slot', 'Casino', 'Fishing'].map(cat => (
+          <button key={cat} onClick={() => setActiveTab(cat)} 
+            className={`px-4 py-3 font-semibold transition-colors ${activeTab === cat ? 'text-yellow-500 border-b-2 border-yellow-500' : 'text-gray-400 hover:text-white'}`}>
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Hero Banner (Placeholder) */}
+      <div className="w-full h-40 bg-gray-800 relative">
+        <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Banner" className="w-full h-full object-cover opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent"></div>
+        <div className="absolute bottom-2 w-full text-center text-xl font-black text-yellow-400 italic drop-shadow-lg">GAJIAN HEBOH EVENT</div>
+      </div>
+
+      {/* Marquee Text */}
+      <div className="bg-[#1a1a1a] flex items-center px-2 py-1 text-xs border-b border-[#333]">
+        <MessageCircle className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+        <marquee className="text-gray-300">Selamat datang di JUARA999! ★ Proses Deposit & Withdraw super cepat! ★ Nikmati berbagai promosi menarik kami.</marquee>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Tombol Aksi Cepat */}
+        <div className="flex gap-3">
+          <button onClick={() => setView('deposit')} className={theme.btnNavy}>Deposit</button>
+          <button onClick={() => setView('withdraw')} className={theme.btnGold}>Transaksi</button>
+        </div>
+
+        {/* Kartu Profil Pengguna (Sesuai Referensi Gambar) */}
+        <div className="bg-[#242424] rounded-xl p-4 flex items-center justify-between border border-[#333] shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500 overflow-hidden">
+               <User className="text-gray-400 w-8 h-8 mt-2" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-gray-200">{user.username}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-400">Iron</span>
+                <span className="text-green-500 font-bold text-sm tracking-wide">Rp. {formatRp(user.balance)}.00</span>
+                <button className="text-gray-400 hover:text-white"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
+              </div>
+            </div>
+          </div>
+          <div className="w-10 h-10 bg-yellow-900/30 rounded flex items-center justify-center border border-yellow-700/50">
+             {/* Vault/Chest icon representation */}
+             <div className="w-6 h-5 bg-gradient-to-b from-yellow-500 to-yellow-700 rounded-sm relative border border-yellow-900 shadow-inner">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-yellow-900 rounded-full"></div>
+             </div>
+          </div>
+        </div>
+
+        {/* Section Postingan Persegi Kecil */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+             <div className="flex items-center gap-2">
+                <span className="text-yellow-500 text-lg">👑</span>
+                <h3 className="font-bold text-gray-200 text-sm uppercase">{activeTab} GAMES</h3>
+             </div>
+             <div className="flex gap-1">
+               <button className="w-6 h-6 rounded-full bg-yellow-600 flex items-center justify-center text-black"><ChevronRight className="w-4 h-4 rotate-180"/></button>
+               <button className="w-6 h-6 rounded-full bg-yellow-600 flex items-center justify-center text-black"><ChevronRight className="w-4 h-4"/></button>
+             </div>
+          </div>
+          
+          {filteredPosts.length === 0 ? (
+            <div className="text-center text-gray-500 py-10 bg-[#1a1a1a] rounded-xl border border-[#333] text-sm">Belum ada daftar {activeTab}</div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {filteredPosts.map(post => (
+                <div key={post.id} className="relative rounded-lg overflow-hidden border border-gray-700 aspect-[4/5] bg-black shadow-lg">
+                  {/* Badge Provider (Contoh 'PG') */}
+                  <div className="absolute top-0 left-0 bg-black/80 text-white text-[8px] font-bold px-1 rounded-br z-10">
+                    PG
+                  </div>
+                  {/* Gambar Utama */}
+                  <img src={post.imageUrl} alt="post" className="w-full h-full object-cover" onError={(e) => e.target.src='https://via.placeholder.com/150x200/222/fff?text=No+Img'} />
+                  {/* Overlay Gradasi & Judul */}
+                  <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-1 pt-4">
+                    <p className="text-white text-[10px] font-medium truncate text-center">{post.title || post.category}</p>
+                  </div>
+                  {/* Ikon Star di pojok kanan bawah */}
+                  <div className="absolute bottom-1 right-1 text-gray-400">★</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- DEPOSIT & WITHDRAW VIEWS (Desain di-update mengikuti tema) ---
+function DepositView({ user, setView, qrisUrl }) {
+  const [amount, setAmount] = useState('');
+  
+  const handleDeposit = async (e) => {
+    e.preventDefault();
+    if(amount < 10000) return alert('Minimal deposit Rp 10.000');
+    await setDoc(getPublicDoc('transactions', `dep_${Date.now()}`), {
+      username: user.username, type: 'deposit', amount: Number(amount), status: 'pending', timestamp: Date.now()
+    });
+    alert('Deposit dikirim! Menunggu konfirmasi Admin.');
+    setView('home');
+  };
+
+  return (
+    <div className="p-4 pt-6">
+      <div className="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-xl">
+        <h2 className="text-xl font-bold mb-6 text-center text-white uppercase border-b border-gray-800 pb-3">Deposit Dana</h2>
+        <div className="bg-white p-2 rounded-lg mb-6 w-48 h-48 mx-auto flex items-center justify-center border-4 border-yellow-500">
+          <img src={qrisUrl} alt="QRIS" className="w-full h-full object-contain" onError={(e) => e.target.src='https://via.placeholder.com/300?text=QRIS'}/>
+        </div>
+        <p className="text-center text-gray-400 text-xs mb-6 px-4">Scan QRIS di atas dengan aplikasi E-Wallet atau Mobile Banking Anda.</p>
+        <form onSubmit={handleDeposit}>
+          <input type="number" placeholder="Nominal (Contoh: 50000)" className={theme.input} value={amount} onChange={e=>setAmount(e.target.value)} required />
+          <button type="submit" className={theme.btnNavy}>KONFIRMASI DEPOSIT</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function WithdrawView({ user, setView }) {
+  const [amount, setAmount] = useState('');
+  
+  const handleWithdraw = async (e) => {
+    e.preventDefault();
+    const val = Number(amount);
+    if(val < 50000) return alert('Minimal withdraw Rp 50.000');
+    if(val > user.balance) return alert('Saldo tidak mencukupi!');
+    
+    await updateDoc(getPublicDoc('members', user.id), { balance: user.balance - val });
+    await setDoc(getPublicDoc('transactions', `wd_${Date.now()}`), {
+      username: user.username, type: 'withdraw', amount: val, status: 'pending', timestamp: Date.now(), bankDetails: `${user.bank} - ${user.accountNo} (${user.accountOwner})`
+    });
+    alert('Permintaan Withdraw dikirim! Saldo dipotong.');
+    setView('home');
+  };
+
+  return (
+    <div className="p-4 pt-6">
+      <div className="bg-[#1a1a1a] rounded-xl p-5 border border-gray-800 shadow-xl">
+        <h2 className="text-xl font-bold mb-6 text-center text-white uppercase border-b border-gray-800 pb-3">Tarik Dana</h2>
+        <div className="bg-[#111] border border-gray-700 rounded-lg p-4 mb-6 text-center">
+          <p className="text-xs text-gray-500 mb-1">Saldo Tersedia</p>
+          <p className="text-2xl font-bold text-green-500">Rp {(user.balance).toLocaleString('id-ID')}</p>
+        </div>
+        <form onSubmit={handleWithdraw}>
+          <input type="number" placeholder="Nominal Penarikan" className={theme.input} value={amount} onChange={e=>setAmount(e.target.value)} required />
+          <div className="bg-gray-800/50 p-3 rounded text-xs text-gray-400 mb-4 border border-gray-700">
+            Tujuan Transfer:<br/> <strong className="text-white">{user.bank} - {user.accountNo}</strong><br/>a.n {user.accountOwner}
+          </div>
+          <button type="submit" className={theme.btnGold}>MINTA PENARIKAN</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
+// ==========================================
+// ADMIN DASHBOARD
+// ==========================================
+function AdminDashboard({ posts, members, transactions, qrisUrl, handleLogout }) {
+  const [tab, setTab] = useState('posts'); 
+
+  const tabs = [
+    { id: 'posts', label: 'Postingan', icon: <FileText className="w-4 h-4"/> },
+    { id: 'members', label: 'Members', icon: <Users className="w-4 h-4"/> },
+    { id: 'tx', label: 'Transaksi', icon: <CreditCard className="w-4 h-4"/> },
+    { id: 'settings', label: 'QRIS', icon: <Settings className="w-4 h-4"/> }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-[#1a1a1a] p-4 rounded-xl border border-[#333]">
+         <div>
+            <h2 className="text-xl font-bold text-yellow-500">ADMIN PANEL</h2>
+            <p className="text-xs text-gray-400">Kelola sistem JUARA999</p>
+         </div>
+         <button onClick={handleLogout} className="bg-red-900/50 hover:bg-red-800 text-red-400 px-3 py-2 rounded text-sm flex items-center gap-2 transition-all">
+            <LogOut className="w-4 h-4"/> Keluar
+         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} 
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all border ${tab === t.id ? 'bg-yellow-600 text-black border-yellow-500' : 'bg-[#1a1a1a] text-gray-400 border-gray-700 hover:border-gray-500'}`}>
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-[#1a1a1a] rounded-xl p-5 border border-[#333]">
+        {tab === 'posts' && <AdminPosts posts={posts} />}
+        {tab === 'members' && <AdminMembers members={members.filter(m => m.role !== 'admin')} />}
+        {tab === 'tx' && <AdminTransactions transactions={transactions} members={members} />}
+        {tab === 'settings' && <AdminSettings currentQris={qrisUrl} />}
+      </div>
+    </div>
+  );
+}
+
+function AdminPosts({ posts }) {
+  const [form, setForm] = useState({ imageUrl: '', category: 'TRANDING', title: '' });
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    await setDoc(getPublicDoc('posts', `post_${Date.now()}`), { ...form, timestamp: Date.now() });
+    setForm({ imageUrl: '', category: 'TRANDING', title: '' });
+  };
+
+  const handleDelete = async (id) => {
+    if(confirm('Hapus postingan ini?')) await deleteDoc(getPublicDoc('posts', id));
+  };
+
+  return (
+    <div>
+      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><PlusCircle className="w-5 h-5 text-yellow-500"/> Tambah Gambar Postingan</h3>
+      <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[#111] p-4 rounded border border-[#333]">
+        <input type="url" placeholder="URL Gambar" className={`${theme.input} !mb-0 md:col-span-2`} required value={form.imageUrl} onChange={e=>setForm({...form, imageUrl: e.target.value})}/>
+        <input type="text" placeholder="Judul (Opsional)" className={`${theme.input} !mb-0`} value={form.title} onChange={e=>setForm({...form, title: e.target.value})}/>
+        <select className={`${theme.input} !mb-0`} value={form.category} onChange={e=>setForm({...form, category: e.target.value})}>
+          <option value="TRANDING">TRANDING</option>
+          <option value="NEW">NEW</option>
+          <option value="PROMOTION">PROMOTION</option>
+        </select>
+        <button type="submit" className={`${theme.btnGold} md:col-span-4 py-2 text-sm mt-2`}>SIMPAN POSTINGAN</button>
+      </form>
+
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        {posts.map(p => (
+          <div key={p.id} className="relative group rounded overflow-hidden aspect-[4/5] bg-black border border-gray-700">
+            <img src={p.imageUrl} alt="post" className="w-full h-full object-cover opacity-60 group-hover:opacity-30 transition-opacity" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
+              <span className="text-[10px] bg-yellow-600 text-black px-1 rounded mb-1">{p.category}</span>
+              <span className="text-xs font-bold text-white mb-2 leading-tight">{p.title}</span>
+              <button onClick={() => handleDelete(p.id)} className="bg-red-600 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">HAPUS</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdminMembers({ members }) {
+  const formatRp = (num) => 'Rp ' + (num || 0).toLocaleString('id-ID');
+  const updateBalance = async (id, cur) => {
+    const val = prompt('Ubah Saldo:', cur);
+    if(val !== null && !isNaN(val)) await updateDoc(getPublicDoc('members', id), { balance: Number(val) });
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm text-gray-300">
+        <thead className="bg-[#111] text-gray-400 border-b border-gray-700">
+          <tr><th className="p-3">User</th><th className="p-3">Bank/Rek</th><th className="p-3 text-right">Saldo</th><th className="p-3 text-center">Aksi</th></tr>
+        </thead>
+        <tbody className="divide-y divide-gray-800">
+          {members.map(m => (
+            <tr key={m.id} className="hover:bg-[#111]">
+              <td className="p-3"><div className="font-bold text-white">{m.username}</div><div className="text-[10px] text-gray-500">{m.name}</div></td>
+              <td className="p-3 text-xs">{m.bank} - {m.accountNo}<br/>{m.accountOwner}</td>
+              <td className="p-3 text-right font-bold text-green-500">{formatRp(m.balance)}</td>
+              <td className="p-3 text-center"><button onClick={() => updateBalance(m.id, m.balance)} className="text-[10px] border border-yellow-500 text-yellow-500 px-2 py-1 rounded hover:bg-yellow-500 hover:text-black">Edit Saldo</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AdminTransactions({ transactions, members }) {
+  const handleAction = async (tx, act) => {
+    if(!confirm(`${act} transaksi ini?`)) return;
+    const user = members.find(m => m.username === tx.username);
+    if(!user) return alert('User tidak ditemukan!');
+
+    if(act === 'ACC') {
+      if(tx.type === 'deposit') await updateDoc(getPublicDoc('members', user.id), { balance: user.balance + tx.amount });
+      await updateDoc(getPublicDoc('transactions', tx.id), { status: 'approved' });
+    } else {
+      if(tx.type === 'withdraw') await updateDoc(getPublicDoc('members', user.id), { balance: user.balance + tx.amount });
+      await updateDoc(getPublicDoc('transactions', tx.id), { status: 'rejected' });
+    }
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm text-gray-300">
+        <thead className="bg-[#111] text-gray-400 border-b border-gray-700">
+          <tr><th className="p-3">Info</th><th className="p-3 text-right">Nominal</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Aksi</th></tr>
+        </thead>
+        <tbody className="divide-y divide-gray-800">
+          {transactions.map(tx => (
+            <tr key={tx.id} className="hover:bg-[#111]">
+              <td className="p-3">
+                <div className="font-bold text-white">{tx.username}</div>
+                <div className={`text-[10px] font-bold uppercase ${tx.type==='deposit' ? 'text-green-500' : 'text-yellow-500'}`}>{tx.type}</div>
+              </td>
+              <td className="p-3 text-right font-bold">Rp {(tx.amount).toLocaleString('id-ID')}</td>
+              <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${tx.status === 'pending' ? 'bg-orange-900/50 text-orange-400' : tx.status === 'approved' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>{tx.status}</span></td>
+              <td className="p-3 text-center">
+                {tx.status === 'pending' ? (
+                  <div className="flex gap-1 justify-center">
+                    <button onClick={()=>handleAction(tx, 'ACC')} className="bg-green-700 text-white px-2 py-1 rounded text-[10px]">ACC</button>
+                    <button onClick={()=>handleAction(tx, 'TOLAK')} className="bg-red-700 text-white px-2 py-1 rounded text-[10px]">TOLAK</button>
+                  </div>
+                ) : '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AdminSettings({ currentQris }) {
+  const [newUrl, setNewUrl] = useState('');
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if(newUrl) {
+      await setDoc(getPublicDoc('settings', 'qris'), { url: newUrl });
+      alert('QRIS diperbarui!'); setNewUrl('');
+    }
+  };
+  return (
+    <div className="max-w-md">
+      <div className="mb-4"><p className="text-xs text-gray-400 mb-2">QRIS Saat Ini:</p><img src={currentQris} alt="QRIS" className="w-32 h-32 object-contain bg-white p-1 rounded" /></div>
+      <form onSubmit={handleUpdate}>
+        <input type="url" placeholder="URL Gambar QRIS Baru" className={theme.input} value={newUrl} onChange={e=>setNewUrl(e.target.value)} required />
+        <button type="submit" className={`${theme.btnGold} py-2 text-sm`}>UPDATE QRIS</button>
+      </form>
+    </div>
+  );
+}
