@@ -39,12 +39,14 @@
 <body class="pb-20">
 
     <!-- Header App -->
-    <header id="app-header" class="hidden sticky top-0 z-50 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 flex justify-between items-center shadow-md">
-        <i class="fa-solid fa-bars text-gold-500 text-xl"></i>
-        <h1 class="text-xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-gold-500" onclick="app.goHome()">
+    <header id="app-header" class="sticky top-0 z-45 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 flex justify-between items-center shadow-md">
+        <i class="fa-solid fa-bars text-gold-500 text-xl cursor-pointer" onclick="app.openLoginModal()"></i>
+        <h1 class="text-xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-gold-500 cursor-pointer" onclick="app.goHome()">
             JUARA999
         </h1>
-        <div class="w-5"></div>
+        <div id="header-auth-btn" class="flex gap-2">
+            <button onclick="app.openLoginModal()" class="text-xs bg-gold-500 text-black px-3 py-1.5 rounded font-bold">Masuk</button>
+        </div>
     </header>
 
     <main class="max-w-md mx-auto relative bg-dark-900 min-h-screen shadow-2xl overflow-hidden" id="main-container">
@@ -54,50 +56,8 @@
             <i class="fa-solid fa-triangle-exclamation mr-1"></i> ERROR DATABASE: Aturan Firestore Anda terkunci. Hubungi Admin/Developer.
         </div>
 
-        <!-- 1. VIEW LOGIN -->
-        <div id="view-login" class="view-section active min-h-screen flex flex-col items-center pt-10 px-6">
-            <h1 class="text-4xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-500 to-gold-500 mb-10 text-center mt-10">JUARA999</h1>
-            <div class="w-full bg-[#1a1a1a] p-6 rounded-xl shadow-2xl border border-gray-800">
-                <h2 class="text-xl font-bold text-center mb-6 text-white uppercase">Masuk Akun</h2>
-                <div id="login-error" class="hidden bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm"></div>
-                <form onsubmit="app.handleLogin(event)">
-                    <input type="text" id="login-user" placeholder="Username" class="input-dark" required>
-                    <input type="password" id="login-pass" placeholder="Kata Sandi" class="input-dark" required>
-                    <button type="submit" class="btn-gold" id="btn-login">MASUK SEKARANG</button>
-                </form>
-                <div class="mt-6 text-center text-gray-400 text-sm">
-                    Belum punya akun? <button onclick="app.switchView('register')" class="text-gold-500 font-bold ml-1">Daftar Di Sini</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. VIEW REGISTER -->
-        <div id="view-register" class="view-section min-h-screen pb-10 pt-10 px-6">
-            <div class="w-full bg-[#1a1a1a] p-6 rounded-xl shadow-2xl border border-gray-800">
-                <h2 class="text-xl font-bold text-center mb-6 text-white uppercase">Pendaftaran</h2>
-                <div id="reg-error" class="hidden bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm"></div>
-                <form onsubmit="app.handleRegister(event)" class="space-y-1">
-                    <input type="text" id="reg-name" placeholder="Nama Lengkap" class="input-dark" required>
-                    <input type="email" id="reg-email" placeholder="Email" class="input-dark" required>
-                    <input type="tel" id="reg-phone" placeholder="Nomor HP" class="input-dark" required>
-                    <input type="text" id="reg-user" placeholder="Username" class="input-dark" required>
-                    <input type="password" id="reg-pass" placeholder="Kata Sandi" class="input-dark" required>
-                    
-                    <div class="border-t border-gray-700 my-4 pt-4 mb-2 text-gold-500 text-xs font-bold uppercase tracking-wider">Informasi Bank</div>
-                    <input type="text" id="reg-bank" placeholder="Nama Bank (BCA/MANDIRI/DANA)" class="input-dark" required>
-                    <input type="number" id="reg-acc" placeholder="Nomor Rekening" class="input-dark" required>
-                    <input type="text" id="reg-owner" placeholder="Nama Pemilik Rekening" class="input-dark" required>
-                    
-                    <button type="submit" id="btn-reg" class="btn-gold mt-4">DAFTAR SEKARANG</button>
-                </form>
-                <div class="mt-6 text-center text-gray-400 text-sm">
-                    Sudah punya akun? <button onclick="app.switchView('login')" class="text-gold-500 font-bold ml-1">Masuk</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. VIEW USER HOME -->
-        <div id="view-home" class="view-section pb-10">
+        <!-- 3. VIEW USER HOME (Default now) -->
+        <div id="view-home" class="view-section active pb-10">
             <div class="flex overflow-x-auto whitespace-nowrap bg-[#1a1a1a] text-sm border-b border-[#333] hide-scrollbar">
                 <button onclick="app.setTab('Sports')" class="tab-btn px-4 py-3 font-semibold text-gray-400 hover:text-white" data-tab="Sports">Sports</button>
                 <button onclick="app.setTab('TRANDING')" class="tab-btn px-4 py-3 font-semibold text-gold-500 border-b-2 border-gold-500" data-tab="TRANDING">TRANDING</button>
@@ -123,24 +83,20 @@
                     <button onclick="app.switchView('withdraw')" class="btn-gold">Transaksi</button>
                 </div>
 
-                <div class="bg-[#242424] rounded-xl p-4 flex items-center justify-between border border-[#333] shadow-md">
+                <div id="user-profile-card" class="bg-[#242424] rounded-xl p-4 flex items-center justify-between border border-[#333] shadow-md">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500 overflow-hidden">
                             <i class="fa-solid fa-user text-gray-400 text-xl mt-1"></i>
                         </div>
                         <div>
-                            <div class="text-sm font-bold text-gray-200" id="ui-username">...</div>
+                            <div class="text-sm font-bold text-gray-200" id="ui-username">Tamu (Belum Masuk)</div>
                             <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs text-gray-400">Iron</span>
+                                <span class="text-xs text-gray-400">Status</span>
                                 <span class="text-green-500 font-bold text-sm tracking-wide">Rp. <span id="ui-balance">0</span>.00</span>
                             </div>
                         </div>
                     </div>
-                    <div class="w-10 h-10 bg-yellow-900/30 rounded flex items-center justify-center border border-yellow-700/50">
-                        <div class="w-6 h-5 bg-gradient-to-b from-yellow-500 to-yellow-700 rounded-sm relative border border-yellow-900 shadow-inner">
-                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-yellow-900 rounded-full"></div>
-                        </div>
-                    </div>
+                    <button onclick="app.openLoginModal()" class="bg-gold-500 text-black text-xs font-bold px-3 py-1.5 rounded">Masuk / Daftar</button>
                 </div>
 
                 <div class="mt-6">
@@ -189,6 +145,50 @@
         </div>
     </main>
 
+    <!-- MODAL POPUP AUTH (LOGIN & REGISTER) -->
+    <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-md bg-[#1a1a1a] p-6 rounded-xl shadow-2xl border border-gray-800 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="app.closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
+            
+            <!-- SUB-VIEW LOGIN -->
+            <div id="modal-view-login">
+                <h2 class="text-xl font-bold text-center mb-6 text-white uppercase">Masuk Akun</h2>
+                <div id="login-error" class="hidden bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm"></div>
+                <form onsubmit="app.handleLogin(event)">
+                    <input type="text" id="login-user" placeholder="Username" class="input-dark" required>
+                    <input type="password" id="login-pass" placeholder="Kata Sandi" class="input-dark" required>
+                    <button type="submit" class="btn-gold" id="btn-login">MASUK SEKARANG</button>
+                </form>
+                <div class="mt-6 text-center text-gray-400 text-sm">
+                    Belum punya akun? <button onclick="app.switchModalTab('register')" class="text-gold-500 font-bold ml-1">Daftar Di Sini</button>
+                </div>
+            </div>
+
+            <!-- SUB-VIEW REGISTER -->
+            <div id="modal-view-register" class="hidden">
+                <h2 class="text-xl font-bold text-center mb-6 text-white uppercase">Pendaftaran</h2>
+                <div id="reg-error" class="hidden bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm"></div>
+                <form onsubmit="app.handleRegister(event)" class="space-y-1">
+                    <input type="text" id="reg-name" placeholder="Nama Lengkap" class="input-dark" required>
+                    <input type="email" id="reg-email" placeholder="Email" class="input-dark" required>
+                    <input type="tel" id="reg-phone" placeholder="Nomor HP" class="input-dark" required>
+                    <input type="text" id="reg-user" placeholder="Username" class="input-dark" required>
+                    <input type="password" id="reg-pass" placeholder="Kata Sandi" class="input-dark" required>
+                    
+                    <div class="border-t border-gray-700 my-4 pt-4 mb-2 text-gold-500 text-xs font-bold uppercase tracking-wider">Informasi Bank</div>
+                    <input type="text" id="reg-bank" placeholder="Nama Bank (BCA/MANDIRI/DANA)" class="input-dark" required>
+                    <input type="number" id="reg-acc" placeholder="Nomor Rekening" class="input-dark" required>
+                    <input type="text" id="reg-owner" placeholder="Nama Pemilik Rekening" class="input-dark" required>
+                    
+                    <button type="submit" id="btn-reg" class="btn-gold mt-4">DAFTAR SEKARANG</button>
+                </form>
+                <div class="mt-6 text-center text-gray-400 text-sm">
+                    Sudah punya akun? <button onclick="app.switchModalTab('login')" class="text-gold-500 font-bold ml-1">Masuk</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ADMIN PANEL -->
     <div id="admin-container" class="hidden max-w-7xl mx-auto p-4 space-y-6 pt-10">
         <div class="flex justify-between items-center bg-[#1a1a1a] p-4 rounded-xl border border-[#333]">
@@ -210,13 +210,14 @@
 
         <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#333]">
             <div id="admin-posts" class="admin-view active block">
-                <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-plus text-gold-500"></i> Tambah Gambar Postingan</h3>
+                <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-plus text-gold-500"></i> Tambah Gambar Postingan & Link</h3>
                 <form onsubmit="app.addPost(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[#111] p-4 rounded border border-[#333]">
                     <input type="url" id="post-url" placeholder="URL Gambar (https://...)" class="input-dark !mb-0 md:col-span-2" required>
                     <input type="text" id="post-title" placeholder="Judul (Opsional)" class="input-dark !mb-0">
                     <select id="post-cat" class="input-dark !mb-0">
-                        <option value="TRANDING">TRANDING</option><option value="NEW">NEW</option><option value="PROMOTION">PROMOTION</option>
+                        <option value="TRANDING">TRANDING</option><option value="NEW">NEW</option><option value="PROMOTION">PROMOTION</option><option value="Sports">Sports</option><option value="Slot">Slot</option>
                     </select>
+                    <input type="url" id="post-link" placeholder="Link Tujuan (https://...)" class="input-dark !mb-0 md:col-span-4" required>
                     <button type="submit" class="btn-gold md:col-span-4 py-2 text-sm mt-2">SIMPAN POSTINGAN</button>
                 </form>
                 <div id="admin-posts-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3"></div>
@@ -251,18 +252,18 @@
     </div>
 
     <!-- BOTTOM NAV USER -->
-    <nav id="bottom-nav" class="hidden fixed bottom-0 w-full max-w-md left-1/2 -translate-x-1/2 bg-[#1a1a1a] border-t border-[#333] flex justify-around items-center py-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+    <nav id="bottom-nav" class="fixed bottom-0 w-full max-w-md left-1/2 -translate-x-1/2 bg-[#1a1a1a] border-t border-[#333] flex justify-around items-center py-2 z-45 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
         <button onclick="app.switchView('home')" class="nav-btn flex flex-col items-center p-2 text-gold-500" data-target="home">
             <i class="fa-solid fa-house mb-1"></i><span class="text-[10px] font-bold">Home</span>
         </button>
         <button onclick="app.switchView('deposit')" class="nav-btn flex flex-col items-center p-2 text-gray-500" data-target="deposit">
             <i class="fa-solid fa-wallet mb-1"></i><span class="text-[10px] font-bold">Deposit</span>
         </button>
-        <button class="flex flex-col items-center p-2 text-gray-500">
+        <button onclick="alert('Silakan hubungi Layanan Live Chat 24/7 kami.')" class="flex flex-col items-center p-2 text-gray-500">
             <i class="fa-solid fa-comments mb-1"></i><span class="text-[10px] font-bold">Live Chat</span>
         </button>
-        <button onclick="app.logout()" class="flex flex-col items-center p-2 text-gray-500 hover:text-red-500 transition-colors">
-            <i class="fa-solid fa-user mb-1"></i><span class="text-[10px] font-bold">Keluar</span>
+        <button onclick="app.checkAuthAction(() => alert('Panel Akun Aktif'))" class="flex flex-col items-center p-2 text-gray-500 hover:text-white transition-colors">
+            <i class="fa-solid fa-user mb-1"></i><span class="text-[10px] font-bold" id="bottom-nav-user-label">Akun</span>
         </button>
     </nav>
 
@@ -301,12 +302,9 @@
 
             init: async function() {
                 try {
-                    // Coba Anon Login (Opsional, Firebase rules menentukan akses sebenarnya)
                     await signInAnonymously(auth).catch(e => console.log("Info: Anon Login off, bypass."));
-                    
-                    // TEST AKSES DATABASE (Mengecek Rules)
                     await this.initAdmin();
-                    this.dbReady = true; // Jika sukses sampai sini, artinya Rules Firebase SUDAH BENAR.
+                    this.dbReady = true; 
                     
                     this.setupListeners();
                     
@@ -314,10 +312,11 @@
                     if(savedUser) {
                         this.currentUser = JSON.parse(savedUser);
                         this.processLoginUI();
+                    } else {
+                        this.updateUI();
                     }
                 } catch(e) { 
                     console.error("Firebase Error:", e);
-                    // Munculkan peringatan berwarna merah di atas layar jika Firebase ditolak
                     document.getElementById('firebase-alert').classList.remove('hidden');
                     alert(`KONEKSI DATABASE DITOLAK!\n\nPesan Error: ${e.message}\n\nMohon buka tab 'Rules' pada Firestore Database di console Firebase Anda, lalu ubah aturannya menjadi 'allow read, write: if true;' agar web bisa diakses.`);
                 }
@@ -372,19 +371,39 @@
                 });
             },
 
+            openLoginModal: function() {
+                document.getElementById('auth-modal').classList.remove('hidden');
+                this.switchModalTab('login');
+            },
+
+            closeAuthModal: function() {
+                document.getElementById('auth-modal').classList.add('hidden');
+            },
+
+            switchModalTab: function(tab) {
+                const loginEl = document.getElementById('modal-view-login');
+                const regEl = document.getElementById('modal-view-register');
+                if(tab === 'login') {
+                    loginEl.classList.remove('hidden');
+                    regEl.classList.add('hidden');
+                } else {
+                    loginEl.classList.add('hidden');
+                    regEl.classList.remove('hidden');
+                }
+            },
+
             switchView: function(viewId) {
+                // Deposit & Withdraw require authentication check
+                if((viewId === 'deposit' || viewId === 'withdraw') && !this.currentUser) {
+                    alert('Silakan masuk terlebih dahulu untuk mengakses menu ini.');
+                    this.openLoginModal();
+                    return;
+                }
+
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 document.getElementById('main-container').classList.remove('hidden');
                 document.getElementById('admin-container').classList.add('hidden');
                 document.getElementById(`view-${viewId}`).classList.add('active');
-
-                if(viewId === 'login' || viewId === 'register') {
-                    document.getElementById('app-header').classList.add('hidden');
-                    document.getElementById('bottom-nav').classList.add('hidden');
-                } else {
-                    document.getElementById('app-header').classList.remove('hidden');
-                    document.getElementById('bottom-nav').classList.remove('hidden');
-                }
 
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     if(btn.dataset.target === viewId || (viewId==='home' && btn.dataset.target==='home')) {
@@ -396,13 +415,20 @@
             },
 
             goHome: function() {
-                if(this.currentUser) {
-                    if(this.currentUser.role === 'admin') {
-                        document.getElementById('main-container').classList.add('hidden');
-                        document.getElementById('admin-container').classList.remove('hidden');
-                    } else {
-                        this.switchView('home');
-                    }
+                if(this.currentUser && this.currentUser.role === 'admin') {
+                    document.getElementById('main-container').classList.add('hidden');
+                    document.getElementById('admin-container').classList.remove('hidden');
+                } else {
+                    this.switchView('home');
+                }
+            },
+
+            checkAuthAction: function(callback) {
+                if(!this.currentUser) {
+                    alert('Silakan masuk terlebih dahulu.');
+                    this.openLoginModal();
+                } else {
+                    callback();
                 }
             },
 
@@ -417,13 +443,13 @@
                 
                 btn.innerText = "MEMERIKSA..."; btn.disabled = true;
 
-                // Delay sedikit agar data sempat ter-fetch
                 setTimeout(() => {
                     const user = this.allMembers.find(m => m.username === u && m.password === p);
                     if(user) {
                         err.classList.add('hidden');
                         this.currentUser = user;
                         localStorage.setItem('juaraUser', JSON.stringify(user));
+                        this.closeAuthModal();
                         this.processLoginUI();
                     } else {
                         err.innerText = "Username atau Sandi salah!";
@@ -460,7 +486,7 @@
                 try {
                     await setDoc(doc(db, 'members', `user_${Date.now()}`), data);
                     alert("Pendaftaran Berhasil! Silahkan Login.");
-                    this.switchView('login');
+                    this.switchModalTab('login');
                     document.getElementById('login-user').value = data.username;
                 } catch(error) {
                     console.error(error);
@@ -474,17 +500,13 @@
                 this.currentUser = null;
                 localStorage.removeItem('juaraUser');
                 document.getElementById('admin-container').classList.add('hidden');
-                document.getElementById('app-header').classList.add('hidden');
-                document.getElementById('bottom-nav').classList.add('hidden');
-                document.getElementById('login-user').value = '';
-                document.getElementById('login-pass').value = '';
-                this.switchView('login');
+                document.getElementById('main-container').classList.remove('hidden');
+                this.updateUI();
+                this.switchView('home');
             },
 
             processLoginUI: function() {
                 if(this.currentUser.role === 'admin') {
-                    document.getElementById('app-header').classList.add('hidden');
-                    document.getElementById('bottom-nav').classList.add('hidden');
                     document.getElementById('main-container').classList.add('hidden');
                     document.getElementById('admin-container').classList.remove('hidden');
                 } else {
@@ -494,11 +516,25 @@
             },
 
             updateUI: function() {
-                if(!this.currentUser) return;
-                document.getElementById('ui-username').innerText = this.currentUser.username;
-                document.getElementById('ui-balance').innerText = this.formatRp(this.currentUser.balance);
-                document.getElementById('wd-balance-text').innerText = this.formatRp(this.currentUser.balance);
-                document.getElementById('wd-bank-info').innerText = `${this.currentUser.bank} - ${this.currentUser.accountNo} (a.n ${this.currentUser.accountOwner})`;
+                const headerAuthBtn = document.getElementById('header-auth-btn');
+                const profileCard = document.getElementById('user-profile-card');
+                const bottomNavUserLabel = document.getElementById('bottom-nav-user-label');
+
+                if(!this.currentUser) {
+                    headerAuthBtn.innerHTML = `<button onclick="app.openLoginModal()" class="text-xs bg-gold-500 text-black px-3 py-1.5 rounded font-bold">Masuk</button>`;
+                    document.getElementById('ui-username').innerText = "Tamu (Belum Masuk)";
+                    document.getElementById('ui-balance').innerText = "0";
+                    profileCard.querySelector('button').classList.remove('hidden');
+                    bottomNavUserLabel.innerText = "Akun";
+                } else {
+                    headerAuthBtn.innerHTML = `<button onclick="app.logout()" class="text-xs bg-red-900/60 text-red-200 px-3 py-1.5 rounded font-bold border border-red-800">Keluar</button>`;
+                    document.getElementById('ui-username').innerText = this.currentUser.username;
+                    document.getElementById('ui-balance').innerText = this.formatRp(this.currentUser.balance);
+                    document.getElementById('wd-balance-text').innerText = this.formatRp(this.currentUser.balance);
+                    document.getElementById('wd-bank-info').innerText = `${this.currentUser.bank} - ${this.currentUser.accountNo} (a.n ${this.currentUser.accountOwner})`;
+                    profileCard.querySelector('button').classList.add('hidden');
+                    bottomNavUserLabel.innerText = this.currentUser.username;
+                }
             },
 
             setTab: function(tabName) {
@@ -514,6 +550,19 @@
                 this.renderPosts();
             },
 
+            handlePostClick: function(linkUrl) {
+                if(!this.currentUser) {
+                    alert('Silakan Masuk / Login terlebih dahulu untuk mengakses link ini!');
+                    this.openLoginModal();
+                    return;
+                }
+                if(linkUrl) {
+                    window.open(linkUrl, '_blank');
+                } else {
+                    alert('Link tujuan belum diatur untuk postingan ini.');
+                }
+            },
+
             renderPosts: function() {
                 const grid = document.getElementById('posts-grid');
                 const filtered = this.allPosts.filter(p => p.category === this.activeTab);
@@ -525,14 +574,15 @@
 
                 let html = '';
                 filtered.forEach(p => {
+                    const linkUrl = p.link || '#';
                     html += `
-                    <div class="relative rounded-lg overflow-hidden border border-gray-700 aspect-[4/5] bg-black shadow-lg">
+                    <div onclick="app.handlePostClick('${linkUrl}')" class="relative rounded-lg overflow-hidden border border-gray-700 aspect-[4/5] bg-black shadow-lg cursor-pointer hover:border-gold-500 transition-all">
                         <div class="absolute top-0 left-0 bg-black/80 text-white text-[8px] font-bold px-1 rounded-br z-10">PG</div>
                         <img src="${p.imageUrl}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150x200/222/fff?text=No+Img'">
                         <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-1 pt-4">
                             <p class="text-white text-[10px] font-medium truncate text-center">${p.title || p.category}</p>
                         </div>
-                        <div class="absolute bottom-1 right-1 text-gray-400 text-[10px]">★</div>
+                        <div class="absolute bottom-1 right-1 text-gold-400 text-[10px]"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
                     </div>`;
                 });
                 grid.innerHTML = html;
@@ -598,10 +648,13 @@
                         imageUrl: document.getElementById('post-url').value,
                         title: document.getElementById('post-title').value,
                         category: document.getElementById('post-cat').value,
+                        link: document.getElementById('post-link').value,
                         timestamp: Date.now()
                     });
                     document.getElementById('post-url').value = '';
                     document.getElementById('post-title').value = '';
+                    document.getElementById('post-link').value = '';
+                    alert('Postingan berhasil disimpan!');
                 } catch(err) { alert("Error menyimpan postingan!"); }
             },
 
@@ -618,7 +671,8 @@
                         <img src="${p.imageUrl}" class="w-full h-full object-cover opacity-60 group-hover:opacity-30 transition-opacity">
                         <div class="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
                             <span class="text-[10px] bg-gold-600 text-black px-1 rounded mb-1">${p.category}</span>
-                            <span class="text-xs font-bold text-white mb-2 leading-tight">${p.title || '-'}</span>
+                            <span class="text-xs font-bold text-white mb-1 leading-tight">${p.title || '-'}</span>
+                            <span class="text-[9px] text-gray-300 truncate w-full mb-2">Link: ${p.link || '-'}</span>
                             <button onclick="app.deletePost('${p.id}')" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">HAPUS</button>
                         </div>
                     </div>`;
