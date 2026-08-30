@@ -26,7 +26,6 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Tema Komponen */
         .input-dark { width: 100%; background: #111; color: #e5e7eb; border: 1px solid #374151; border-radius: 0.25rem; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.875rem; outline: none; transition: all 0.3s; }
         .input-dark:focus { border-color: #eab308; }
         .btn-gold { width: 100%; background: linear-gradient(to bottom, #eab308, #a16207); color: black; font-weight: bold; padding: 0.75rem 1rem; border-radius: 0.25rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: all 0.3s; }
@@ -37,7 +36,7 @@
         .view-section.active { display: block; }
     </style>
 </head>
-<body class="pb-20"> <!-- padding bottom for nav -->
+<body class="pb-20">
 
     <!-- Header App -->
     <header id="app-header" class="hidden sticky top-0 z-50 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 flex justify-between items-center shadow-md">
@@ -50,16 +49,21 @@
 
     <main class="max-w-md mx-auto relative bg-dark-900 min-h-screen shadow-2xl overflow-hidden" id="main-container">
         
+        <!-- Notifikasi Status Firebase (Jika Error) -->
+        <div id="firebase-alert" class="hidden bg-red-900 text-white p-3 text-xs font-bold text-center border-b-4 border-red-500">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> ERROR DATABASE: Aturan Firestore Anda terkunci. Hubungi Admin/Developer.
+        </div>
+
         <!-- 1. VIEW LOGIN -->
-        <div id="view-login" class="view-section active min-h-screen flex flex-col items-center pt-20 px-6">
-            <h1 class="text-4xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-500 to-gold-500 mb-10 text-center">JUARA999</h1>
+        <div id="view-login" class="view-section active min-h-screen flex flex-col items-center pt-10 px-6">
+            <h1 class="text-4xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-500 to-gold-500 mb-10 text-center mt-10">JUARA999</h1>
             <div class="w-full bg-[#1a1a1a] p-6 rounded-xl shadow-2xl border border-gray-800">
                 <h2 class="text-xl font-bold text-center mb-6 text-white uppercase">Masuk Akun</h2>
                 <div id="login-error" class="hidden bg-red-900/50 text-red-400 p-3 mb-4 rounded border border-red-800 text-center text-sm"></div>
                 <form onsubmit="app.handleLogin(event)">
                     <input type="text" id="login-user" placeholder="Username" class="input-dark" required>
                     <input type="password" id="login-pass" placeholder="Kata Sandi" class="input-dark" required>
-                    <button type="submit" class="btn-gold">MASUK SEKARANG</button>
+                    <button type="submit" class="btn-gold" id="btn-login">MASUK SEKARANG</button>
                 </form>
                 <div class="mt-6 text-center text-gray-400 text-sm">
                     Belum punya akun? <button onclick="app.switchView('register')" class="text-gold-500 font-bold ml-1">Daftar Di Sini</button>
@@ -94,8 +98,7 @@
 
         <!-- 3. VIEW USER HOME -->
         <div id="view-home" class="view-section pb-10">
-            <!-- Kategori Menu -->
-            <div class="flex overflow-x-auto whitespace-nowrap bg-[#1a1a1a] text-sm border-b border-[#333] hide-scrollbar" id="cat-menu">
+            <div class="flex overflow-x-auto whitespace-nowrap bg-[#1a1a1a] text-sm border-b border-[#333] hide-scrollbar">
                 <button onclick="app.setTab('Sports')" class="tab-btn px-4 py-3 font-semibold text-gray-400 hover:text-white" data-tab="Sports">Sports</button>
                 <button onclick="app.setTab('TRANDING')" class="tab-btn px-4 py-3 font-semibold text-gold-500 border-b-2 border-gold-500" data-tab="TRANDING">TRANDING</button>
                 <button onclick="app.setTab('NEW')" class="tab-btn px-4 py-3 font-semibold text-gray-400 hover:text-white" data-tab="NEW">NEW</button>
@@ -103,27 +106,23 @@
                 <button onclick="app.setTab('Slot')" class="tab-btn px-4 py-3 font-semibold text-gray-400 hover:text-white" data-tab="Slot">Slot</button>
             </div>
 
-            <!-- Banner -->
             <div class="w-full h-40 bg-gray-800 relative">
                 <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover opacity-70" alt="Banner">
                 <div class="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent"></div>
                 <div class="absolute bottom-2 w-full text-center text-xl font-black text-gold-400 italic drop-shadow-lg">GAJIAN HEBOH EVENT</div>
             </div>
 
-            <!-- Marquee -->
             <div class="bg-[#1a1a1a] flex items-center px-2 py-2 text-xs border-b border-[#333] overflow-hidden whitespace-nowrap">
                 <i class="fa-solid fa-volume-high text-gray-400 mr-2 flex-shrink-0"></i>
                 <marquee class="text-gray-300">Selamat datang di JUARA999! ★ Proses Deposit & Withdraw super cepat! ★ Nikmati berbagai promosi menarik kami.</marquee>
             </div>
 
             <div class="p-4 space-y-4">
-                <!-- Action Buttons -->
                 <div class="flex gap-3">
                     <button onclick="app.switchView('deposit')" class="btn-navy">Deposit</button>
                     <button onclick="app.switchView('withdraw')" class="btn-gold">Transaksi</button>
                 </div>
 
-                <!-- Profil Card -->
                 <div class="bg-[#242424] rounded-xl p-4 flex items-center justify-between border border-[#333] shadow-md">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-500 overflow-hidden">
@@ -144,7 +143,6 @@
                     </div>
                 </div>
 
-                <!-- Games Grid -->
                 <div class="mt-6">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2">
@@ -152,9 +150,7 @@
                             <h3 class="font-bold text-gray-200 text-sm uppercase"><span id="ui-cat-title">TRANDING</span> GAMES</h3>
                         </div>
                     </div>
-                    <div id="posts-grid" class="grid grid-cols-3 gap-2">
-                        <!-- Posts di render JS -->
-                    </div>
+                    <div id="posts-grid" class="grid grid-cols-3 gap-2"></div>
                 </div>
             </div>
         </div>
@@ -169,7 +165,7 @@
                 <p class="text-center text-gray-400 text-xs mb-6 px-4">Scan QRIS di atas dengan aplikasi E-Wallet atau Mobile Banking Anda.</p>
                 <form onsubmit="app.handleDeposit(event)">
                     <input type="number" id="dep-amount" placeholder="Nominal (Contoh: 50000)" class="input-dark" required>
-                    <button type="submit" class="btn-navy">KONFIRMASI DEPOSIT</button>
+                    <button type="submit" class="btn-navy" id="btn-dep">KONFIRMASI DEPOSIT</button>
                 </form>
             </div>
         </div>
@@ -187,14 +183,13 @@
                     <div class="bg-gray-800/50 p-3 rounded text-xs text-gray-400 mb-4 border border-gray-700">
                         Tujuan Transfer:<br> <strong class="text-white" id="wd-bank-info">-</strong>
                     </div>
-                    <button type="submit" class="btn-gold">MINTA PENARIKAN</button>
+                    <button type="submit" class="btn-gold" id="btn-wd">MINTA PENARIKAN</button>
                 </form>
             </div>
         </div>
-
     </main>
 
-    <!-- ADMIN PANEL (Beda Container) -->
+    <!-- ADMIN PANEL -->
     <div id="admin-container" class="hidden max-w-7xl mx-auto p-4 space-y-6 pt-10">
         <div class="flex justify-between items-center bg-[#1a1a1a] p-4 rounded-xl border border-[#333]">
             <div>
@@ -206,7 +201,7 @@
             </button>
         </div>
 
-        <div class="flex flex-wrap gap-2" id="admin-tabs">
+        <div class="flex flex-wrap gap-2">
             <button onclick="app.setAdminTab('posts')" class="admin-tab-btn flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg border bg-gold-600 text-black border-gold-500" data-tab="posts"><i class="fa-solid fa-image"></i> Postingan</button>
             <button onclick="app.setAdminTab('members')" class="admin-tab-btn flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg border bg-[#1a1a1a] text-gray-400 border-gray-700" data-tab="members"><i class="fa-solid fa-users"></i> Members</button>
             <button onclick="app.setAdminTab('tx')" class="admin-tab-btn flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg border bg-[#1a1a1a] text-gray-400 border-gray-700" data-tab="tx"><i class="fa-solid fa-credit-card"></i> Transaksi</button>
@@ -214,7 +209,6 @@
         </div>
 
         <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#333]">
-            <!-- Admin Posts -->
             <div id="admin-posts" class="admin-view active block">
                 <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-plus text-gold-500"></i> Tambah Gambar Postingan</h3>
                 <form onsubmit="app.addPost(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[#111] p-4 rounded border border-[#333]">
@@ -228,7 +222,6 @@
                 <div id="admin-posts-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3"></div>
             </div>
 
-            <!-- Admin Members -->
             <div id="admin-members" class="admin-view hidden overflow-x-auto">
                 <table class="w-full text-left text-sm text-gray-300">
                     <thead class="bg-[#111] text-gray-400 border-b border-gray-700">
@@ -238,7 +231,6 @@
                 </table>
             </div>
 
-            <!-- Admin Transactions -->
             <div id="admin-tx" class="admin-view hidden overflow-x-auto">
                 <table class="w-full text-left text-sm text-gray-300">
                     <thead class="bg-[#111] text-gray-400 border-b border-gray-700">
@@ -248,7 +240,6 @@
                 </table>
             </div>
 
-            <!-- Admin Settings -->
             <div id="admin-settings" class="admin-view hidden max-w-md">
                 <div class="mb-4"><p class="text-xs text-gray-400 mb-2">QRIS Saat Ini:</p><img id="admin-qris-preview" src="" class="w-32 h-32 object-contain bg-white p-1 rounded" /></div>
                 <form onsubmit="app.updateQris(event)">
@@ -281,7 +272,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Konfigurasi Anda
+        // Konfigurasi Asli Milik Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBHXVyBAqf_-UziVXBEQI2cMzyRZ_yiRIc",
             authDomain: "juarajuara-1096b.firebaseapp.com",
@@ -304,27 +295,34 @@
             allTx: [],
             qrisUrl: '',
             activeTab: 'TRANDING',
+            dbReady: false,
             
-            // Format Rupiah
             formatRp: (num) => (num || 0).toLocaleString('id-ID'),
 
-            // Inisialisasi
             init: async function() {
                 try {
-                    await signInAnonymously(auth);
-                    this.initAdmin();
+                    // Coba Anon Login (Opsional, Firebase rules menentukan akses sebenarnya)
+                    await signInAnonymously(auth).catch(e => console.log("Info: Anon Login off, bypass."));
+                    
+                    // TEST AKSES DATABASE (Mengecek Rules)
+                    await this.initAdmin();
+                    this.dbReady = true; // Jika sukses sampai sini, artinya Rules Firebase SUDAH BENAR.
+                    
                     this.setupListeners();
                     
-                    // Cek session login sederhana menggunakan localStorage
                     const savedUser = localStorage.getItem('juaraUser');
                     if(savedUser) {
                         this.currentUser = JSON.parse(savedUser);
                         this.processLoginUI();
                     }
-                } catch(e) { console.error("Firebase Init Error:", e); }
+                } catch(e) { 
+                    console.error("Firebase Error:", e);
+                    // Munculkan peringatan berwarna merah di atas layar jika Firebase ditolak
+                    document.getElementById('firebase-alert').classList.remove('hidden');
+                    alert(`KONEKSI DATABASE DITOLAK!\n\nPesan Error: ${e.message}\n\nMohon buka tab 'Rules' pada Firestore Database di console Firebase Anda, lalu ubah aturannya menjadi 'allow read, write: if true;' agar web bisa diakses.`);
+                }
             },
 
-            // Pastikan data admin default ada
             initAdmin: async function() {
                 const adminRef = doc(db, 'members', 'admin');
                 const adminSnap = await getDoc(adminRef);
@@ -338,11 +336,9 @@
                 }
             },
 
-            // Listeners Data (Realtime)
             setupListeners: function() {
                 onSnapshot(collection(db, 'members'), (snap) => {
                     this.allMembers = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                    // Update current user if logged in
                     if(this.currentUser) {
                         const updated = this.allMembers.find(m => m.username === this.currentUser.username);
                         if(updated) {
@@ -352,6 +348,8 @@
                         }
                     }
                     this.renderAdminMembers();
+                }, (error) => {
+                    console.error("Gagal mendengarkan data Members:", error);
                 });
 
                 onSnapshot(collection(db, 'posts'), (snap) => {
@@ -374,19 +372,12 @@
                 });
             },
 
-            // LOGIKA UI Navigasi
             switchView: function(viewId) {
-                // Sembunyikan semua view
                 document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-                
-                // Jika view adalah halaman utama user/login
                 document.getElementById('main-container').classList.remove('hidden');
                 document.getElementById('admin-container').classList.add('hidden');
-                
-                // Munculkan target
                 document.getElementById(`view-${viewId}`).classList.add('active');
 
-                // Header & Nav visibility
                 if(viewId === 'login' || viewId === 'register') {
                     document.getElementById('app-header').classList.add('hidden');
                     document.getElementById('bottom-nav').classList.add('hidden');
@@ -395,7 +386,6 @@
                     document.getElementById('bottom-nav').classList.remove('hidden');
                 }
 
-                // Update bottom nav icon state
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     if(btn.dataset.target === viewId || (viewId==='home' && btn.dataset.target==='home')) {
                         btn.className = "nav-btn flex flex-col items-center p-2 text-gold-500";
@@ -416,27 +406,37 @@
                 }
             },
 
-            // Autentikasi
             handleLogin: function(e) {
                 e.preventDefault();
+                if(!this.dbReady) return alert("Sistem masih mendeteksi Database Firebase terkunci. Silakan periksa Rules Anda.");
+
+                const btn = document.getElementById('btn-login');
                 const u = document.getElementById('login-user').value;
                 const p = document.getElementById('login-pass').value;
                 const err = document.getElementById('login-error');
                 
-                const user = this.allMembers.find(m => m.username === u && m.password === p);
-                if(user) {
-                    err.classList.add('hidden');
-                    this.currentUser = user;
-                    localStorage.setItem('juaraUser', JSON.stringify(user));
-                    this.processLoginUI();
-                } else {
-                    err.innerText = "Username atau Sandi salah!";
-                    err.classList.remove('hidden');
-                }
+                btn.innerText = "MEMERIKSA..."; btn.disabled = true;
+
+                // Delay sedikit agar data sempat ter-fetch
+                setTimeout(() => {
+                    const user = this.allMembers.find(m => m.username === u && m.password === p);
+                    if(user) {
+                        err.classList.add('hidden');
+                        this.currentUser = user;
+                        localStorage.setItem('juaraUser', JSON.stringify(user));
+                        this.processLoginUI();
+                    } else {
+                        err.innerText = "Username atau Sandi salah!";
+                        err.classList.remove('hidden');
+                    }
+                    btn.innerText = "MASUK SEKARANG"; btn.disabled = false;
+                }, 500);
             },
 
             handleRegister: async function(e) {
                 e.preventDefault();
+                if(!this.dbReady) return alert("Pendaftaran ditolak: Database Firebase terkunci (Rules belum diubah).");
+
                 const err = document.getElementById('reg-error');
                 const btn = document.getElementById('btn-reg');
                 
@@ -453,8 +453,7 @@
                 };
 
                 if(this.allMembers.find(m => m.username === data.username)) {
-                    err.innerText = "Username sudah digunakan!";
-                    err.classList.remove('hidden'); return;
+                    err.innerText = "Username sudah digunakan!"; err.classList.remove('hidden'); return;
                 }
 
                 btn.innerText = "MEMPROSES..."; btn.disabled = true;
@@ -462,9 +461,11 @@
                     await setDoc(doc(db, 'members', `user_${Date.now()}`), data);
                     alert("Pendaftaran Berhasil! Silahkan Login.");
                     this.switchView('login');
-                } catch(err) {
-                    console.error(err);
-                    err.innerText = "Gagal mendaftar."; err.classList.remove('hidden');
+                    document.getElementById('login-user').value = data.username;
+                } catch(error) {
+                    console.error(error);
+                    err.innerText = "Gagal menyimpan data ke Firebase. Periksa Security Rules!"; 
+                    err.classList.remove('hidden');
                 }
                 btn.innerText = "DAFTAR SEKARANG"; btn.disabled = false;
             },
@@ -492,7 +493,6 @@
                 }
             },
 
-            // Update UI User
             updateUI: function() {
                 if(!this.currentUser) return;
                 document.getElementById('ui-username').innerText = this.currentUser.username;
@@ -504,8 +504,6 @@
             setTab: function(tabName) {
                 this.activeTab = tabName;
                 document.getElementById('ui-cat-title').innerText = tabName;
-                
-                // Style horizontal menu
                 document.querySelectorAll('.tab-btn').forEach(btn => {
                     if(btn.dataset.tab === tabName) {
                         btn.className = "tab-btn px-4 py-3 font-semibold text-gold-500 border-b-2 border-gold-500";
@@ -540,38 +538,46 @@
                 grid.innerHTML = html;
             },
 
-            // Transaksi User
             handleDeposit: async function(e) {
                 e.preventDefault();
+                const btn = document.getElementById('btn-dep');
                 const amt = Number(document.getElementById('dep-amount').value);
                 if(amt < 10000) return alert('Minimal deposit Rp 10.000');
                 
-                await setDoc(doc(db, 'transactions', `dep_${Date.now()}`), {
-                    username: this.currentUser.username, type: 'deposit', amount: amt, status: 'pending', timestamp: Date.now()
-                });
-                alert('Deposit dikirim! Menunggu konfirmasi Admin.');
-                document.getElementById('dep-amount').value = '';
-                this.switchView('home');
+                btn.disabled = true; btn.innerText = "MEMPROSES...";
+                try {
+                    await setDoc(doc(db, 'transactions', `dep_${Date.now()}`), {
+                        username: this.currentUser.username, type: 'deposit', amount: amt, status: 'pending', timestamp: Date.now()
+                    });
+                    alert('Deposit dikirim! Menunggu konfirmasi Admin.');
+                    document.getElementById('dep-amount').value = '';
+                    this.switchView('home');
+                } catch(error) { alert("Gagal, Firebase ditolak!"); console.error(error); }
+                btn.disabled = false; btn.innerText = "KONFIRMASI DEPOSIT";
             },
 
             handleWithdraw: async function(e) {
                 e.preventDefault();
+                const btn = document.getElementById('btn-wd');
                 const amt = Number(document.getElementById('wd-amount').value);
                 if(amt < 50000) return alert('Minimal withdraw Rp 50.000');
                 if(amt > this.currentUser.balance) return alert('Saldo tidak mencukupi!');
                 
-                // Potong saldo di awal
-                await updateDoc(doc(db, 'members', this.currentUser.id), { balance: this.currentUser.balance - amt });
-                await setDoc(doc(db, 'transactions', `wd_${Date.now()}`), {
-                    username: this.currentUser.username, type: 'withdraw', amount: amt, status: 'pending', timestamp: Date.now(),
-                    bankDetails: `${this.currentUser.bank} - ${this.currentUser.accountNo} (${this.currentUser.accountOwner})`
-                });
-                alert('Permintaan Withdraw dikirim! Saldo dipotong.');
-                document.getElementById('wd-amount').value = '';
-                this.switchView('home');
+                btn.disabled = true; btn.innerText = "MEMPROSES...";
+                try {
+                    await updateDoc(doc(db, 'members', this.currentUser.id), { balance: this.currentUser.balance - amt });
+                    await setDoc(doc(db, 'transactions', `wd_${Date.now()}`), {
+                        username: this.currentUser.username, type: 'withdraw', amount: amt, status: 'pending', timestamp: Date.now(),
+                        bankDetails: `${this.currentUser.bank} - ${this.currentUser.accountNo} (${this.currentUser.accountOwner})`
+                    });
+                    alert('Permintaan Withdraw dikirim! Saldo dipotong.');
+                    document.getElementById('wd-amount').value = '';
+                    this.switchView('home');
+                } catch(error) { alert("Gagal, Firebase ditolak!"); console.error(error); }
+                btn.disabled = false; btn.innerText = "MINTA PENARIKAN";
             },
 
-            // === ADMIN LOGIC ===
+            // === ADMIN ===
             setAdminTab: function(tabId) {
                 document.querySelectorAll('.admin-view').forEach(el => el.classList.add('hidden'));
                 document.getElementById(`admin-${tabId}`).classList.remove('hidden');
@@ -587,15 +593,16 @@
 
             addPost: async function(e) {
                 e.preventDefault();
-                const data = {
-                    imageUrl: document.getElementById('post-url').value,
-                    title: document.getElementById('post-title').value,
-                    category: document.getElementById('post-cat').value,
-                    timestamp: Date.now()
-                };
-                await setDoc(doc(db, 'posts', `post_${Date.now()}`), data);
-                document.getElementById('post-url').value = '';
-                document.getElementById('post-title').value = '';
+                try {
+                    await setDoc(doc(db, 'posts', `post_${Date.now()}`), {
+                        imageUrl: document.getElementById('post-url').value,
+                        title: document.getElementById('post-title').value,
+                        category: document.getElementById('post-cat').value,
+                        timestamp: Date.now()
+                    });
+                    document.getElementById('post-url').value = '';
+                    document.getElementById('post-title').value = '';
+                } catch(err) { alert("Error menyimpan postingan!"); }
             },
 
             deletePost: async function(id) {
@@ -647,13 +654,15 @@
                 const user = this.allMembers.find(m => m.username === tx.username);
                 if(!user) return alert('User tidak ditemukan!');
 
-                if(action === 'ACC') {
-                    if(tx.type === 'deposit') await updateDoc(doc(db, 'members', user.id), { balance: user.balance + tx.amount });
-                    await updateDoc(doc(db, 'transactions', txId), { status: 'approved' });
-                } else {
-                    if(tx.type === 'withdraw') await updateDoc(doc(db, 'members', user.id), { balance: user.balance + tx.amount });
-                    await updateDoc(doc(db, 'transactions', txId), { status: 'rejected' });
-                }
+                try {
+                    if(action === 'ACC') {
+                        if(tx.type === 'deposit') await updateDoc(doc(db, 'members', user.id), { balance: user.balance + tx.amount });
+                        await updateDoc(doc(db, 'transactions', txId), { status: 'approved' });
+                    } else {
+                        if(tx.type === 'withdraw') await updateDoc(doc(db, 'members', user.id), { balance: user.balance + tx.amount });
+                        await updateDoc(doc(db, 'transactions', txId), { status: 'rejected' });
+                    }
+                } catch(e) { alert("Error saat update transaksi."); }
             },
 
             renderAdminTx: function() {
@@ -690,14 +699,15 @@
                 e.preventDefault();
                 const url = document.getElementById('qris-url').value;
                 if(url) {
-                    await setDoc(doc(db, 'settings', 'qris'), { url: url });
-                    alert('QRIS diperbarui!');
-                    document.getElementById('qris-url').value = '';
+                    try {
+                        await setDoc(doc(db, 'settings', 'qris'), { url: url });
+                        alert('QRIS diperbarui!');
+                        document.getElementById('qris-url').value = '';
+                    } catch(e) { alert("Gagal update QRIS"); }
                 }
             }
         };
 
-        // Jalankan Inisialisasi
         window.app.init();
     </script>
 </body>
